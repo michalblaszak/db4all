@@ -28,8 +28,10 @@ public abstract class DialogAbstractDialogAddEdit extends Stage {
 	protected EditMode mode;
 	VBox vbMain;
 	protected DialogStatus dialogStatus = DialogStatus.RETURN_NO_VALUE;
+	protected Stage parent;
 	
 	public DialogAbstractDialogAddEdit(Stage parent, EditMode mode, String title) {
+		this.parent = parent;
 		this.mode = mode;
 		this.setTitle(title);
 		this.initOwner(parent);

@@ -88,7 +88,7 @@ public class Main extends Application {
         AbstractStatus ret = DBConnection.connect();
         
         if (ret.getStatus() != CallStatus.OK) {
-			Globals.showAlert(AlertType.ERROR, ret.getText(), Translations.ERROR.getText(), Translations.ERROR.getText());
+			Globals.showAlert(stage, AlertType.ERROR, ret.getText(), Translations.ERROR.getText(), Translations.ERROR.getText());
             
             stage.close();
         }
@@ -113,12 +113,12 @@ public class Main extends Application {
         			}
         		}
         	} catch (WrongTypeException e) {
-    			Globals.showAlert(AlertType.ERROR, ret.getText(), Translations.ERROR.getText(), Translations.ERROR.getText());
+    			Globals.showAlert(stage, AlertType.ERROR, ret.getText(), Translations.ERROR.getText(), Translations.ERROR.getText());
                 
                 stage.close();
         	}
         } else {
-			Globals.showAlert(AlertType.ERROR, ret.getText(), Translations.ERROR.getText(), Translations.ERROR.getText());
+			Globals.showAlert(stage, AlertType.ERROR, ret.getText(), Translations.ERROR.getText(), Translations.ERROR.getText());
         }
     }
     

@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
+import javafx.stage.Stage;
 
 public class Globals {
 	public enum Lang {
@@ -40,8 +41,13 @@ public class Globals {
 	
 	public static Image database_icon, table_icon;
 	
-	public static void showAlert(AlertType alertType, String alertText, String titleText, String headerText) {
+	public static void showAlert(Stage parent, AlertType alertType, String alertText, String titleText) {
+		Globals.showAlert(parent, alertType, alertText, titleText, titleText);
+	}
+
+	public static void showAlert(Stage parent, AlertType alertType, String alertText, String titleText, String headerText) {
     	Alert a = new Alert(alertType, alertText);
+    	a.initOwner(parent);
     	a.setTitle(titleText);
     	a.setHeaderText(headerText);
         a.show();

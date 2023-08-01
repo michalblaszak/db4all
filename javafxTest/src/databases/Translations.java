@@ -135,6 +135,22 @@ public enum Translations {
 	INSERTING_DB_FAILED(new HashMap<Globals.Lang, String>(){
 		{put(Globals.Lang.PL, "Zapis nowej bazy danych nie powiódł się.");
 		put(Globals.Lang.EN, "Inserting a new database failed.");}
+	}),
+	ERROR_CODE(new HashMap<Globals.Lang, String>(){
+		{put(Globals.Lang.PL, "Kod błędu:");
+		put(Globals.Lang.EN, "Error code:");}
+	}),
+	DATABASE_MUST_BE_SELECTED(new HashMap<Globals.Lang, String>(){
+		{put(Globals.Lang.PL, "Wybierz bazę danych.");
+		put(Globals.Lang.EN, "A databse must be selected.");}
+	}),
+	WRONG_SELECTION(new HashMap<Globals.Lang, String>(){
+		{put(Globals.Lang.PL, "Nie wybrano właściwego elementu");
+		put(Globals.Lang.EN, "Wrong element has been selected");}
+	}),
+	TABLE_MUST_BE_SELECTED(new HashMap<Globals.Lang, String>(){
+		{put(Globals.Lang.PL, "Wybierz tabelę.");
+		put(Globals.Lang.EN, "A table must be selected.");}
 	});
 	
 	

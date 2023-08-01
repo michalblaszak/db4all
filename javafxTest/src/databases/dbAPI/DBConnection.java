@@ -13,6 +13,8 @@ import databases.Translations;
 import databases.Variant;
 import databases.Globals.Lang;
 import databases.dbAPI.Globals.*;
+import databases.dbAPI.Dod.*;
+
 
 public class DBConnection {	
 	static Connection conn = null;
@@ -29,7 +31,7 @@ public class DBConnection {
             
             return ret;            
         } catch (SQLException e) {
-            return new StatusFail(FailReason.DBEngine, e.getErrorCode() + e.getMessage());
+            return new StatusFail(FailReason.DBEngine, Translations.ERROR_CODE.getText() + e.getErrorCode() + "\n"+ e.getMessage());
         } 
     }
 
@@ -44,7 +46,7 @@ public class DBConnection {
         	try {
         		return fun.exec();
         	} catch (SQLException e) {
-            	return new StatusFail(FailReason.DBEngine, e.getErrorCode() + e.getMessage());
+            	return new StatusFail(FailReason.DBEngine, Translations.ERROR_CODE.getText() + e.getErrorCode() + "\n" + e.getMessage());
             }
         } else {
         	return new StatusFail(FailReason.APP_API, Translations.DB_NOT_CONNECTED.getText());
@@ -67,57 +69,11 @@ public class DBConnection {
             CREATE TABLE IF NOT EXISTS "tables" (
                     "id"	INTEGER NOT NULL UNIQUE,
                     "name"	TEXT NOT NULL,
-                    "type"	INTEGER NOT NULL check (type in (1,2)),
                     "db_id"	INTEGER NOT NULL REFERENCES databases (id) ON DELETE CASCADE,
                     UNIQUE("db_id","name"),
                     PRIMARY KEY("id" AUTOINCREMENT)
                 );
                 
-            CREATE TRIGGER IF NOT EXISTS I_double_primary_table_check
-                BEFORE INSERT ON "tables"
-                BEGIN
-                    select case
-                    when new.type = 1 then
-                        -- check if there are other primary tables
-                        (SELECT RAISE(FAIL, "primary table already exists")
-                        FROM "tables"
-                        WHERE "type" = 1 and db_id = new.db_id)
-                    when new.type = 2 then
-                        -- check if there is a primary teable already
-                        (select raise(FAIL, "primary table is missing")
-                        from 
-                        (select count(*) as cnt
-                        from "tables"
-                        where "type" = 1 and db_id = new.db_id) as t
-                        where t.cnt = 0)
-                    end;
-                END;
-
-            CREATE TRIGGER IF NOT EXISTS U_double_primary_table_check
-                BEFORE UPDATE ON "tables"
-                BEGIN
-                    select case
-                    when new.type = 1 and old.type = 2 THEN
-                        (SELECT RAISE(FAIL, "primary table already exists")
-                        FROM "tables"
-                        WHERE "type" = 1 and db_id = new.db_id)
-                    when new.type = 2 and old.type = 1 then
-                        RAISE(FAIL, "the master table must exist")
-                    end;
-                END;
-
-            CREATE TRIGGER IF NOT EXISTS D_double_primary_table_check
-                BEFORE DELETE ON "tables"
-                when old.type = 1
-                BEGIN
-                    select raise(FAIL, "details tables still exist")
-                    from 
-                    (select count(*) as cnt
-                    from "tables"
-                    where "type" = 2 and db_id = old.db_id) as t
-                    where t.cnt <> 0;
-                end;
-
             -- Columns
             --   Types:
             --     1: TextLine
@@ -186,7 +142,6 @@ public class DBConnection {
     public static AbstractStatus insertDatabase(RecDatabase rec) {
     	return databaseRequest( () -> {
         	String sql = "INSERT INTO databases (name) VALUES (?)";
-//        				SELECT last_insert_rowid();
 
         	PreparedStatement stmt = conn.prepareStatement(sql);
         	stmt.setString(1, rec.name());
@@ -212,4 +167,80 @@ public class DBConnection {
     	});
     }
 
+    public static AbstractStatus updateDatabase(RecDatabase rec) {
+    	return databaseRequest( () -> {
+        	String sql = "UPDATE databases SET name = ? where id = ?";
+
+        	PreparedStatement stmt = conn.prepareStatement(sql);
+        	stmt.setString(1, rec.name());
+        	stmt.setInt(2, rec.id());
+       
+        	stmt.executeUpdate();
+        	
+        	return new StatusOK();
+    	});
+    }
+    
+    public static AbstractStatus getTables(int db_id) {
+    	return databaseRequest( () -> {
+    		String sql = "SELECT id, name, db_id FROM tables WHERE db_id = ?";
+    		
+			PreparedStatement stmt = conn.prepareStatement(sql);
+			stmt.setInt(1, db_id);
+			
+			ResultSet rs = stmt.executeQuery();
+			List<RecTable> ret = new ArrayList<RecTable>();
+			while (rs.next()) {
+				ret.add(new RecTable(rs.getInt(1), rs.getString(2), rs.getInt(3)));
+			}
+			
+			rs.close();
+			
+			return new StatusOK(new Variant(ret));
+    	});
+    }
+
+    public static AbstractStatus insertTable(RecTable rec) {
+    	return databaseRequest( () -> {
+        	String sql = "INSERT INTO tables (name, db_id) VALUES (?, ?)";
+
+        	PreparedStatement stmt = conn.prepareStatement(sql);
+        	stmt.setString(1, rec.name());
+        	stmt.setInt(2, rec.db_id());
+       
+        	stmt.executeUpdate();
+        	
+			Statement stmt_id = conn.createStatement();
+			ResultSet rs_id = stmt_id.executeQuery("SELECT last_insert_rowid()");
+
+        	AbstractStatus ret;
+        	
+        	if (rs_id.next()) {
+            	RecTable ret_rec;
+
+            	ret_rec = new RecTable(rs_id.getInt(1), rec.name(), rec.db_id());
+        		ret = new StatusOK(new Variant(ret_rec));
+        	} else {
+        		ret = new StatusFail(FailReason.DBEngine, Translations.INSERTING_DB_FAILED.getText());
+        	}
+        	rs_id.close();
+        	
+        	return ret;
+    	});
+    }
+
+    public static AbstractStatus updateTable(RecTable rec) {
+    	return databaseRequest( () -> {
+        	String sql = "UPDATE tables SET name = ?, db_id = ? where id = ?";
+
+        	PreparedStatement stmt = conn.prepareStatement(sql);
+        	stmt.setString(1, rec.name());
+        	stmt.setInt(2, rec.db_id());
+        	stmt.setInt(3, rec.id());
+       
+        	stmt.executeUpdate();
+        	
+        	return new StatusOK();
+    	});
+    }
 }

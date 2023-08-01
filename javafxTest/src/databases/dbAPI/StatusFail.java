@@ -20,7 +20,7 @@ public class StatusFail extends AbstractStatus {
 	}
 	
 	public String getText() {
-		return mainDescription.getText() + "\n"
+		return mainDescription.getText() + "\n\n"
 				+ reason_description;
 	}
 }
